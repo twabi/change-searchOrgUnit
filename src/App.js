@@ -13,7 +13,7 @@ function App(props) {
   const [alertModal, setAlertModal] = useState(false);
   const [status, setStatus] = useState(0);
   const [statusText, setStatusText] = useState("normal");
-  const [messageText, setMessageText] = useState("Checking excel sheet.....");
+  const [messageText, setMessageText] = useState("Processing...");
   const [groups, setGroups] = useState(props.userGroups);
   const [roles, setRoles] = useState(props.userRoles);
   const [users, setUsers] = useState(props.users);
@@ -42,7 +42,8 @@ function App(props) {
   };
 
   const changeOrgUnit = () => {
-
+    setAlertModal(true);
+    setStatus(0);
     var tempArray = [];
     var userGroup = groups[groups.findIndex(x => x.id === selectedGroup)];
 
@@ -51,7 +52,7 @@ function App(props) {
       var orgUser = users[users.findIndex(x => x.id === user.id)];
       var units = orgUser&&orgUser.organisationUnits;
 
-      units.map((unit) => {
+      units&&units.map((unit) => {
          var org = orgUnits[orgUnits.findIndex(x => x.id === unit.id)];
          unit.parent = org && org.parent && org.parent.id;
       });
@@ -59,17 +60,20 @@ function App(props) {
       tempArray.push(orgUser);
 
     });
+    setStatus(20);
 
 
     var payloadArray = [];
-    tempArray.map((user) => {
+    tempArray.map((user, index) => {
 
+      setStatus(40);
       console.log(user);
       var teiArray = [];
       user.organisationUnits.map((unit) => {
-        console.log(unit);
-        var tei = {"id" : unit.parent}
+
+        var tei = unit.parent ? {"id" : unit.parent} : {};
         teiArray.push(tei);
+        delete unit.parent;
       });
 
       console.log(teiArray);
@@ -96,15 +100,27 @@ function App(props) {
 
     });
 
+    setStatus(80);
+    console.log(payloadArray);
 
-    Promise.all(payloadArray.map((item) => axios.put(`https://ccdev.org/chistest/api/users/${item.id}`, item,{
+
+    Promise.all(payloadArray.map((item) => axios.put(`https://ccdev.org/chistest/api/users/${item.id}`,item,{
       auth: {
-        username: "ahmed",
-        password: "Atwabi@20"
+        username: "atwabi",
+        password: "@Itwabi1234"
       }
-    }))).then((data)=> {
+    }, item))).then((data)=> {
       console.log(data);
+      setStatus(100);
+      setStatusText("success");
+      setMessageText("orgunit successfully changed");
+    }).catch((error) => {
+      setStatus(100);
+      setStatusText("exception");
+      setMessageText("Unable to change search orgUnits, an error occurred: " + error);
     })
+
+
 
 
   }
